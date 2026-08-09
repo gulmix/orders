@@ -1,0 +1,45 @@
+version: "2"
+
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  default: standard
+  enable:
+    - bodyclose      # незакрытое тело HTTP-ответа = утечка соединений
+    - errorlint      # сравнение ошибок через == вместо errors.Is
+    - nilerr         # return nil при ненулевой ошибке
+    - noctx          # HTTP-запрос без context
+    - nolintlint     # //nolint без объяснения причины
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - errcheck
+          - noctx
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/gulmix/orders
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
