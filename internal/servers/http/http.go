@@ -59,6 +59,12 @@ func (s *Server) Run() error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
+		// Обработчик снимаем сразу, ещё до самого shutdown: дальше сигналы
+		// должен получать рантайм. Иначе второй Ctrl+C уйдёт в уже
+		// отработавший обработчик, и нетерпеливому человеку останется
+		// только kill -9.
+		stop()
+
 		s.logger.Info("получен сигнал остановки, дожидаемся активных запросов",
 			slog.Duration("timeout", s.shutdownTimeout))
 	}

@@ -21,6 +21,14 @@ curl -s localhost:8080/healthz
 # {"status":"ok"}
 ```
 
+`make tools` кладёт линтер в `$(go env GOPATH)/bin`. Если этого каталога нет
+в `PATH`, `make lint` будет твердить, что линтера нет, сколько его ни ставь —
+добавьте строку в `~/.zshrc`:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
 Путь модуля в `go.mod` остаётся `github.com/gulmix/orders` — так задумано.
 Свои пакеты вы импортируете как `github.com/gulmix/orders/internal/...`, на это
 же имя настроен `goimports` в `.golangci.yml`. Захотите своё — меняйте оба

@@ -2,12 +2,18 @@ package config
 
 import (
 	"log/slog"
+	"os"
 	"testing"
 	"time"
 )
 
 // Пример того, как выглядит table-driven тест в этом репозитории.
 // Именно такой стиль ждём в домашних заданиях.
+//
+// Тест читает окружение, поэтому первым делом он это окружение себе готовит:
+// иначе экспортированный в шелле ORDERS_LOG_LEVEL красит его в красный, хотя
+// с кодом всё в порядке. Тест, который зависит от того, где его запустили, —
+// не тест.
 func TestLoad(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -96,9 +102,7 @@ func TestLoad(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for k, v := range tt.env {
-				t.Setenv(k, v)
-			}
+			setEnv(t, tt.env)
 
 			got, err := Load()
 			if tt.wantErr {
@@ -114,5 +118,27 @@ func TestLoad(t *testing.T) {
 				t.Errorf("Load() = %+v, ожидалось %+v", got, tt.want)
 			}
 		})
+	}
+}
+
+// setEnv готовит окружение подтеста: сначала снимает все переменные сервиса,
+// потом выставляет те, что нужны кейсу.
+//
+// t.Setenv здесь нужен ради его cleanup — он запоминает прежнее значение и
+// вернёт его после теста; os.Unsetenv сразу за ним убирает переменную, чтобы
+// Load увидел её незаданной (пустая строка для ORDERS_LOG_LEVEL — это уже
+// другой случай, ошибка разбора).
+func setEnv(t *testing.T, env map[string]string) {
+	t.Helper()
+
+	for _, key := range []string{"ORDERS_HTTP_ADDR", "ORDERS_SHUTDOWN_TIMEOUT", "ORDERS_LOG_LEVEL"} {
+		t.Setenv(key, "")
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatalf("не удалось снять %s: %v", key, err)
+		}
+	}
+
+	for k, v := range env {
+		t.Setenv(k, v)
 	}
 }
