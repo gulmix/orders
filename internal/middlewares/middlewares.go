@@ -3,6 +3,7 @@
 package middlewares
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -49,6 +50,12 @@ func Recover(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
+				// http.ErrAbortHandler — не авария, а намеренный обрыв ответа:
+				// net/http ждёт эту панику обратно и гасит её сам, молча.
+				if err, ok := rec.(error); ok && errors.Is(err, http.ErrAbortHandler) {
+					panic(rec)
+				}
+
 				logger.ErrorContext(r.Context(), "паника в хендлере",
 					slog.Any("panic", rec),
 					slog.String("request_id", requestid.FromContext(r.Context())),
@@ -66,6 +73,13 @@ type statusRecorder struct {
 	http.ResponseWriter
 	status      int
 	wroteHeader bool
+}
+
+// Unwrap отдаёт исходный ResponseWriter: по нему http.NewResponseController
+// добирается до Flush и Hijack. Без этого метода обёртка тихо отрезает
+// хендлерам стриминг и перехват соединения.
+func (r *statusRecorder) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
 }
 
 func (r *statusRecorder) WriteHeader(status int) {

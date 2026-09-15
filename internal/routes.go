@@ -23,11 +23,14 @@ func InitRoutes(logger *slog.Logger, health *healthController.Controller) http.H
 
 	mux.HandleFunc("GET /healthz", health.Health)
 
-	// Порядок обёрток важен: request id должен появиться раньше логирования,
-	// а recover — охватывать всё остальное.
+	// Порядок обёрток важен, и читается он снизу вверх: request id появляется
+	// первым, чтобы попасть и в лог, и в ответ; логирование идёт следующим и
+	// потому видит любой запрос, включая тот, в котором хендлер паникует;
+	// recover — ближе всех к хендлеру, поэтому его ответ 500 успевает
+	// записаться в статус и попасть в ту же строку лога.
 	var h http.Handler = mux
-	h = middlewares.Logging(logger, h)
 	h = middlewares.Recover(logger, h)
+	h = middlewares.Logging(logger, h)
 	h = middlewares.RequestID(h)
 
 	return h
