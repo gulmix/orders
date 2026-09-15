@@ -22,6 +22,10 @@ check: tidy-check fmt-check lint test ## Главная команда: ровн
 test: ## Тесты под -race с покрытием
 	$(GO) test -race -covermode=atomic -coverprofile=$(COVER_FILE) $(PKG)
 
+.PHONY: race
+race: ## Пять прогонов тестов под -race: гонки любят прятаться
+	$(GO) test -race -count=5 $(PKG)
+
 .PHONY: run
 run: ## Запустить сервис локально (подхватит .env, если он есть)
 	@set -a; [ -f .env ] && . ./.env || true; set +a; $(GO) run ./cmd/$(BINARY)

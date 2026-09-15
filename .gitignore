@@ -9,6 +9,12 @@ coverage.html
 .env
 .env.local
 
+*.pem
+*.key
+*.crt
+*.csr
+/certs/
+
 .idea/
 .vscode/
 .DS_Store

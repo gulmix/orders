@@ -52,6 +52,9 @@ jobs:
       - name: Тесты с детектором гонок
         run: make test
 
+      - name: Пять прогонов под -race
+        run: make race
+
       - name: Сохранить отчёт о покрытии
         if: always()
         uses: actions/upload-artifact@v4
